@@ -4,6 +4,7 @@ import {
   computed,
   ElementRef,
   inject,
+  input,
   signal,
   viewChild,
 } from '@angular/core';
@@ -88,7 +89,7 @@ type Mode = 'any' | 'all' | 'only';
     <div class="controls">
       <mat-button-toggle-group
         [value]="mode()"
-        (change)="mode.set($event.value)"
+        (change)="setMode($event.value)"
         hideSingleSelectionIndicator
         aria-label="Match mode"
       >
@@ -129,6 +130,12 @@ type Mode = 'any' | 'all' | 'only';
     }
   `,
   styles: `
+    :host {
+      display: block;
+      max-width: 900px;
+      margin: 0 auto;
+      padding-bottom: 16px;
+    }
     .picker {
       width: 100%;
     }
@@ -155,15 +162,27 @@ export class PuzzlesPageComponent {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
 
+  /** Focus the category picker when the view opens. */
+  readonly autofocus = input(true);
   protected readonly query = signal('');
-  protected readonly mode = signal<Mode>('only');
   private readonly input = viewChild.required<ElementRef<HTMLInputElement>>('input');
 
   constructor() {
-    afterNextRender(() => this.input().nativeElement.focus());
+    afterNextRender(() => {
+      if (this.autofocus()) this.input().nativeElement.focus();
+    });
   }
 
   /** Selection lives in the URL (?c=id1,id2) so it survives reloads and can be bookmarked. */
+  /** Match mode lives in the URL too (?m=any|all; default "only"), so links can preset it. */
+  private readonly modeParam = toSignal(this.route.queryParamMap.pipe(map((p) => p.get('m'))), {
+    initialValue: null,
+  });
+  protected readonly mode = computed<Mode>(() => {
+    const m = this.modeParam();
+    return m === 'any' || m === 'all' ? m : 'only';
+  });
+
   private readonly selectedIds = toSignal(
     this.route.queryParamMap.pipe(map((p) => (p.get('c') ?? '').split(',').filter(Boolean))),
     { initialValue: [] as string[] },
@@ -211,6 +230,16 @@ export class PuzzlesPageComponent {
     this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { c: ids.length ? ids.join(',') : null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  }
+
+  protected setMode(mode: Mode): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { m: mode === 'only' ? null : mode },
+      queryParamsHandling: 'merge',
       replaceUrl: true,
     });
   }

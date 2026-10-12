@@ -19,5 +19,11 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./puzzles/puzzles-page.component').then((m) => m.PuzzlesPageComponent),
   },
+  {
+    path: 'all',
+    title: 'All-in-One · OotSS',
+    loadComponent: () =>
+      import('./all-in-one/all-in-one-page.component').then((m) => m.AllInOnePageComponent),
+  },
   { path: '**', redirectTo: 'categories' },
 ];

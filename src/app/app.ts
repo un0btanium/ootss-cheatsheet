@@ -1,3 +1,4 @@
+import { CdkScrollable } from '@angular/cdk/scrolling';
 import { Component, effect, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
@@ -14,6 +15,7 @@ import { confirm } from './shared/category-actions.service';
 @Component({
   selector: 'app-root',
   imports: [
+    CdkScrollable,
     MatButtonModule,
     MatIconModule,
     MatMenuModule,
@@ -60,13 +62,24 @@ import { confirm } from './shared/category-actions.service';
       }
     </nav>
 
-    <mat-tab-nav-panel #panel>
+    <mat-tab-nav-panel #panel cdkScrollable>
       <main>
         <router-outlet />
       </main>
     </mat-tab-nav-panel>
   `,
   styles: `
+    :host {
+      display: flex;
+      flex-direction: column;
+      height: 100dvh;
+    }
+    mat-tab-nav-panel {
+      display: block;
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+    }
     .title {
       font: var(--mat-sys-title-large);
     }
@@ -80,8 +93,8 @@ import { confirm } from './shared/category-actions.service';
       margin-right: 6px;
     }
     main {
-      max-width: 900px;
-      margin: 0 auto;
+      height: 100%;
+      box-sizing: border-box;
       padding: 16px;
     }
   `,
@@ -95,6 +108,7 @@ export class App {
     { path: '/categories', label: 'Categories', icon: 'label' },
     { path: '/interactions', label: 'Interactions', icon: 'notes' },
     { path: '/puzzles', label: 'Puzzles', icon: 'extension' },
+    { path: '/all', label: 'All-in-One', icon: 'view_column' },
   ];
 
   constructor() {

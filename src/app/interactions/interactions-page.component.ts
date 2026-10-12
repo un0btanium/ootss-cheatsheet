@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, input, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialog } from '@angular/material/dialog';
@@ -29,7 +29,7 @@ import { InteractionEditorComponent } from './interaction-editor.component';
         <app-interaction-editor
           saveLabel="Add"
           [clearOnSave]="true"
-          [autofocus]="true"
+          [autofocus]="autofocus()"
           (save)="store.addInteraction($event)"
         />
       </mat-card-content>
@@ -77,6 +77,12 @@ import { InteractionEditorComponent } from './interaction-editor.component';
     }
   `,
   styles: `
+    :host {
+      display: block;
+      max-width: 900px;
+      margin: 0 auto;
+      padding-bottom: 16px;
+    }
     .new {
       margin-bottom: 24px;
     }
@@ -99,6 +105,8 @@ import { InteractionEditorComponent } from './interaction-editor.component';
 export class InteractionsPageComponent {
   protected readonly store = inject(StoreService);
   private readonly dialog = inject(MatDialog);
+  /** Focus the new-interaction editor when the view opens. */
+  readonly autofocus = input(true);
   protected readonly filter = signal('');
   protected readonly editingId = signal<string | null>(null);
 

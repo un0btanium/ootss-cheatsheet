@@ -4,6 +4,7 @@ import {
   computed,
   ElementRef,
   inject,
+  input,
   signal,
   viewChild,
 } from '@angular/core';
@@ -53,8 +54,8 @@ import { CategoryChipComponent } from '../shared/category-chip.component';
         <span class="usage">{{ usage(c.id) }} interaction(s)</span>
         <a
           matIconButton
-          [routerLink]="['/puzzles']"
-          [queryParams]="{ c: c.id }"
+          [routerLink]="[puzzlesPath()]"
+          [queryParams]="{ c: c.id, m: 'any' }"
           matTooltip="Show interactions"
           aria-label="Show interactions"
         >
@@ -78,6 +79,12 @@ import { CategoryChipComponent } from '../shared/category-chip.component';
     }
   `,
   styles: `
+    :host {
+      display: block;
+      max-width: 900px;
+      margin: 0 auto;
+      padding-bottom: 16px;
+    }
     .list-header {
       display: flex;
       flex-wrap: wrap;
@@ -101,11 +108,17 @@ import { CategoryChipComponent } from '../shared/category-chip.component';
 export class CategoriesPageComponent {
   protected readonly store = inject(StoreService);
   protected readonly actions = inject(CategoryActions);
+  /** Focus the filter input when the view opens. */
+  readonly autofocus = input(true);
+  /** Route whose Puzzles view "Show interactions" fills (via the `c` query param). */
+  readonly puzzlesPath = input('/puzzles');
   protected readonly filter = signal('');
   private readonly filterInput = viewChild.required<ElementRef<HTMLInputElement>>('filterInput');
 
   constructor() {
-    afterNextRender(() => this.filterInput().nativeElement.focus());
+    afterNextRender(() => {
+      if (this.autofocus()) this.filterInput().nativeElement.focus();
+    });
   }
 
   protected readonly filtered = computed(() => {
