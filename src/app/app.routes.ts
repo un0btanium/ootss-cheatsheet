@@ -19,5 +19,5 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./puzzles/puzzles-page.component').then((m) => m.PuzzlesPageComponent),
   },
-  { path: '**', redirectTo: 'interactions' },
+  { path: '**', redirectTo: 'categories' },
 ];

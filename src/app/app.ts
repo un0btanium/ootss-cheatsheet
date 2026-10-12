@@ -45,10 +45,11 @@ import { confirm } from './shared/category-actions.service';
       />
     </mat-toolbar>
 
-    <nav mat-tab-nav-bar [tabPanel]="panel" mat-stretch-tabs="false">
+    <nav mat-tab-nav-bar [tabPanel]="panel" mat-stretch-tabs="false" mat-align-tabs="center">
       @for (link of links; track link.path) {
         <a
           mat-tab-link
+          class="nav-link"
           [routerLink]="link.path"
           routerLinkActive
           #rla="routerLinkActive"
@@ -72,6 +73,9 @@ import { confirm } from './shared/category-actions.service';
     .spacer {
       flex: 1;
     }
+    .nav-link {
+      min-width: 160px;
+    }
     .tab-icon {
       margin-right: 6px;
     }
@@ -88,8 +92,8 @@ export class App {
   private readonly snackBar = inject(MatSnackBar);
 
   protected readonly links = [
-    { path: '/interactions', label: 'Interactions', icon: 'notes' },
     { path: '/categories', label: 'Categories', icon: 'label' },
+    { path: '/interactions', label: 'Interactions', icon: 'notes' },
     { path: '/puzzles', label: 'Puzzles', icon: 'extension' },
   ];
 

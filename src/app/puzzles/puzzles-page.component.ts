@@ -49,6 +49,9 @@ type Mode = 'any' | 'all' | 'only';
       <mat-chip-grid #grid aria-label="Selected categories">
         @for (c of selected(); track c.id) {
           <mat-chip-row
+            class="removable"
+            matTooltip="Click to remove"
+            (click)="remove(c)"
             (removed)="remove(c)"
             [style.--mat-chip-elevated-container-color]="c.bgColor"
             [style.--mat-chip-label-text-color]="c.textColor"
@@ -89,17 +92,17 @@ type Mode = 'any' | 'all' | 'only';
         hideSingleSelectionIndicator
         aria-label="Match mode"
       >
-        <mat-button-toggle value="any" matTooltip="Mentions at least one selected category">
-          Any category
-        </mat-button-toggle>
-        <mat-button-toggle value="all" matTooltip="Mentions every selected category">
-          All categories
-        </mat-button-toggle>
         <mat-button-toggle
           value="only"
           matTooltip="Every category it mentions is selected (nothing else needed)"
         >
           Only these
+        </mat-button-toggle>
+        <mat-button-toggle value="any" matTooltip="Mentions at least one selected category">
+          Any category
+        </mat-button-toggle>
+        <mat-button-toggle value="all" matTooltip="Mentions every selected category">
+          All categories
         </mat-button-toggle>
       </mat-button-toggle-group>
       @if (selected().length) {
@@ -129,6 +132,9 @@ type Mode = 'any' | 'all' | 'only';
     .picker {
       width: 100%;
     }
+    .removable {
+      cursor: pointer;
+    }
     .controls {
       display: flex;
       align-items: center;
@@ -150,7 +156,7 @@ export class PuzzlesPageComponent {
   private readonly route = inject(ActivatedRoute);
 
   protected readonly query = signal('');
-  protected readonly mode = signal<Mode>('any');
+  protected readonly mode = signal<Mode>('only');
   private readonly input = viewChild.required<ElementRef<HTMLInputElement>>('input');
 
   constructor() {
