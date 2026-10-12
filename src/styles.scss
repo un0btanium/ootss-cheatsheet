@@ -1,0 +1,95 @@
+// Include theming for Angular Material with `mat.theme()`.
+// This Sass mixin will define CSS variables that are used for styling Angular Material
+// components according to the Material 3 design spec.
+// Learn more about theming and how to use it for your application's
+// custom components at https://material.angular.dev/guide/theming
+@use '@angular/material' as mat;
+
+html {
+  height: 100%;
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$azure-palette,
+        tertiary: mat.$blue-palette,
+      ),
+      typography: Roboto,
+      density: 0,
+    )
+  );
+}
+
+body {
+  // Default the application to a light color theme. This can be changed to
+  // `dark` to enable the dark color theme, or to `light dark` to defer to the
+  // user's system settings.
+  color-scheme: light dark;
+
+  // Set a default background, font and text colors for the application using
+  // Angular Material's system-level CSS variables. Learn more about these
+  // variables at https://material.angular.dev/guide/system-variables
+  background-color: var(--mat-sys-surface);
+  color: var(--mat-sys-on-surface);
+  font: var(--mat-sys-body-medium);
+
+  // Reset the user agent margin.
+  margin: 0;
+  height: 100%;
+}
+/* You can add global styles to this file, and also import other style files */
+
+html {
+  color-scheme: light dark;
+}
+
+body {
+  color-scheme: light dark;
+}
+
+/* Category label, used in views, the editor and dialogs. */
+.cat-chip {
+  display: inline-block;
+  margin: 0 1px;
+  padding: 0 8px;
+  border: none;
+  border-radius: 12px;
+  font: inherit;
+  font-weight: 500;
+  line-height: 1.6;
+  white-space: nowrap;
+  vertical-align: baseline;
+  user-select: none;
+}
+
+button.cat-chip,
+[contenteditable] .cat-chip {
+  cursor: pointer;
+
+  &:hover {
+    filter: brightness(1.12);
+  }
+}
+
+button.cat-chip:focus-visible {
+  outline: 2px solid var(--mat-sys-primary);
+  outline-offset: 1px;
+}
+
+/* Shared list rows */
+.row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+}
+
+.grow {
+  flex: 1;
+  min-width: 0;
+}
+
+.empty {
+  color: var(--mat-sys-on-surface-variant);
+  padding: 16px 0;
+}

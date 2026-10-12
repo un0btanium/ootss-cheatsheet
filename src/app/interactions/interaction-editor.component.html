@@ -1,0 +1,49 @@
+<div
+  #editor
+  class="editor"
+  contenteditable="true"
+  role="combobox"
+  aria-multiline="true"
+  aria-autocomplete="list"
+  [attr.aria-expanded]="matches().length > 0"
+  [attr.aria-controls]="listboxId"
+  [attr.aria-activedescendant]="matches().length ? listboxId + '-' + active() : null"
+  [attr.aria-label]="placeholder()"
+  [attr.data-placeholder]="placeholder()"
+  [class.empty]="empty()"
+  spellcheck="true"
+  (input)="onInput()"
+  (keydown)="onKeydown($event)"
+  (paste)="onPaste($event)"
+  (drop)="$event.preventDefault()"
+  (click)="onClick($event)"
+  (blur)="onBlur()"
+></div>
+
+<div class="actions">
+  <span class="hint">Enter to save · Shift+Enter for a new line</span>
+  @if (showCancel()) {
+    <button matButton type="button" (click)="cancel.emit()">Cancel</button>
+  }
+  <button matButton="filled" type="button" [disabled]="empty()" (click)="submit()">
+    {{ saveLabel() }}
+  </button>
+</div>
+
+<ng-template #dropdown>
+  <div class="ac-panel" role="listbox" [id]="listboxId">
+    @for (m of matches(); track m.category.id; let i = $index) {
+      <div
+        class="ac-option"
+        role="option"
+        [id]="listboxId + '-' + i"
+        [attr.aria-selected]="i === active()"
+        (mousedown)="$event.preventDefault(); accept(m)"
+        (mouseenter)="active.set(i)"
+      >
+        <app-category-chip [category]="m.category" [plain]="true" />
+      </div>
+    }
+    <div class="ac-hint">↑↓ select · Enter accept · Esc dismiss</div>
+  </div>
+</ng-template>
