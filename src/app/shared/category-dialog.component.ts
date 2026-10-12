@@ -3,9 +3,12 @@ import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { Category } from '../data/models';
 import { StoreService } from '../data/store.service';
+import { contrastRatio, MIN_CONTRAST, randomColorPair } from './colors';
 
 export interface CategoryDialogData {
   category?: Category;
@@ -33,7 +36,15 @@ const PRESETS: [string, string][] = [
 
 @Component({
   selector: 'app-category-dialog',
-  imports: [FormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule],
+  imports: [
+    FormsModule,
+    MatDialogModule,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatIconModule,
+    MatInputModule,
+    MatTooltipModule,
+  ],
   template: `
     <h2 mat-dialog-title>{{ data.category ? 'Edit category' : 'New category' }}</h2>
     <mat-dialog-content>
@@ -73,6 +84,15 @@ const PRESETS: [string, string][] = [
               (ngModelChange)="bgColor.set($event)"
             />
           </label>
+          <button
+            matIconButton
+            type="button"
+            matTooltip="Random readable colors"
+            aria-label="Randomize colors"
+            (click)="randomize()"
+          >
+            <mat-icon>casino</mat-icon>
+          </button>
         </div>
 
         <div class="presets" aria-label="Color presets">
@@ -94,6 +114,9 @@ const PRESETS: [string, string][] = [
           Preview:
           <span class="cat-chip" [style.color]="textColor()" [style.background]="bgColor()">
             {{ name().trim() || 'Category' }}
+          </span>
+          <span class="contrast" [class.low]="contrast() < minContrast">
+            Contrast {{ contrast().toFixed(1) }}:1
           </span>
         </div>
       </form>
@@ -151,6 +174,14 @@ const PRESETS: [string, string][] = [
       align-items: center;
       gap: 8px;
     }
+    .contrast {
+      margin-left: auto;
+      color: var(--mat-sys-on-surface-variant);
+      font: var(--mat-sys-body-small);
+      &.low {
+        color: var(--mat-sys-error);
+      }
+    }
   `,
 })
 export class CategoryDialogComponent {
@@ -160,10 +191,13 @@ export class CategoryDialogComponent {
   private readonly store = inject(StoreService);
   protected readonly presets = PRESETS;
 
-  private readonly initialPreset = PRESETS[Math.floor(Math.random() * PRESETS.length)];
+  protected readonly minContrast = MIN_CONTRAST;
+
+  private readonly initialColors = randomColorPair();
   protected readonly name = signal(this.data.category?.name ?? this.data.initialName ?? '');
-  protected readonly textColor = signal(this.data.category?.textColor ?? this.initialPreset[0]);
-  protected readonly bgColor = signal(this.data.category?.bgColor ?? this.initialPreset[1]);
+  protected readonly textColor = signal(this.data.category?.textColor ?? this.initialColors[0]);
+  protected readonly bgColor = signal(this.data.category?.bgColor ?? this.initialColors[1]);
+  protected readonly contrast = computed(() => contrastRatio(this.textColor(), this.bgColor()));
 
   protected readonly error = computed(() => {
     const name = this.name().trim();
@@ -173,6 +207,12 @@ export class CategoryDialogComponent {
       return 'A category with this name exists.';
     return null;
   });
+
+  protected randomize(): void {
+    const [text, bg] = randomColorPair();
+    this.textColor.set(text);
+    this.bgColor.set(bg);
+  }
 
   protected submit(): void {
     if (this.error()) return;

@@ -1,4 +1,12 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import {
+  afterNextRender,
+  Component,
+  computed,
+  ElementRef,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -26,9 +34,15 @@ import { CategoryChipComponent } from '../shared/category-chip.component';
       <mat-form-field subscriptSizing="dynamic" class="filter">
         <mat-icon matPrefix>search</mat-icon>
         <mat-label>Filter</mat-label>
-        <input matInput [value]="filter()" (input)="filter.set($any($event.target).value)" />
+        <input
+          #filterInput
+          matInput
+          [value]="filter()"
+          (input)="filter.set($any($event.target).value)"
+          (keydown.enter)="createFromFilter()"
+        />
       </mat-form-field>
-      <button matButton="filled" (click)="actions.create(filter().trim())">
+      <button matButton="filled" (click)="createFromFilter()">
         <mat-icon>add</mat-icon> New category
       </button>
     </div>
@@ -88,11 +102,24 @@ export class CategoriesPageComponent {
   protected readonly store = inject(StoreService);
   protected readonly actions = inject(CategoryActions);
   protected readonly filter = signal('');
+  private readonly filterInput = viewChild.required<ElementRef<HTMLInputElement>>('filterInput');
+
+  constructor() {
+    afterNextRender(() => this.filterInput().nativeElement.focus());
+  }
 
   protected readonly filtered = computed(() => {
     const q = this.filter().trim().toLocaleLowerCase();
     return this.store.categories().filter((c) => c.name.toLocaleLowerCase().includes(q));
   });
+
+  /** Opens the create dialog prefilled with the filter text; clears the filter on success. */
+  protected async createFromFilter(): Promise<void> {
+    const created = await this.actions.create(this.filter().trim());
+    if (created) this.filter.set('');
+    // Defer so we win over the dialog restoring focus to the element that opened it.
+    setTimeout(() => this.filterInput().nativeElement.focus());
+  }
 
   protected usage(id: string): number {
     return this.store.usageCount().get(id) ?? 0;

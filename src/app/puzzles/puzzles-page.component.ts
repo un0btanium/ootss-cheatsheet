@@ -1,4 +1,12 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import {
+  afterNextRender,
+  Component,
+  computed,
+  ElementRef,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import {
   MatAutocompleteModule,
@@ -10,6 +18,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { ActivatedRoute, Router } from '@angular/router';
 import { map } from 'rxjs';
 import { Category } from '../data/models';
@@ -17,7 +26,7 @@ import { categoryIds, StoreService } from '../data/store.service';
 import { CategoryChipComponent } from '../shared/category-chip.component';
 import { InteractionViewComponent } from '../shared/interaction-view.component';
 
-type Mode = 'any' | 'all';
+type Mode = 'any' | 'all' | 'only';
 
 @Component({
   selector: 'app-puzzles-page',
@@ -29,6 +38,7 @@ type Mode = 'any' | 'all';
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
+    MatTooltipModule,
     CategoryChipComponent,
     InteractionViewComponent,
   ],
@@ -79,8 +89,18 @@ type Mode = 'any' | 'all';
         hideSingleSelectionIndicator
         aria-label="Match mode"
       >
-        <mat-button-toggle value="any">Any category</mat-button-toggle>
-        <mat-button-toggle value="all">All categories</mat-button-toggle>
+        <mat-button-toggle value="any" matTooltip="Mentions at least one selected category">
+          Any category
+        </mat-button-toggle>
+        <mat-button-toggle value="all" matTooltip="Mentions every selected category">
+          All categories
+        </mat-button-toggle>
+        <mat-button-toggle
+          value="only"
+          matTooltip="Every category it mentions is selected (nothing else needed)"
+        >
+          Only these
+        </mat-button-toggle>
       </mat-button-toggle-group>
       @if (selected().length) {
         <button matButton (click)="setSelection([])">Clear</button>
@@ -131,6 +151,11 @@ export class PuzzlesPageComponent {
 
   protected readonly query = signal('');
   protected readonly mode = signal<Mode>('any');
+  private readonly input = viewChild.required<ElementRef<HTMLInputElement>>('input');
+
+  constructor() {
+    afterNextRender(() => this.input().nativeElement.focus());
+  }
 
   /** Selection lives in the URL (?c=id1,id2) so it survives reloads and can be bookmarked. */
   private readonly selectedIds = toSignal(
@@ -153,14 +178,17 @@ export class PuzzlesPageComponent {
 
   protected readonly results = computed(() => {
     const ids = new Set(this.selected().map((c) => c.id));
-    const needed = this.mode() === 'all' ? ids.size : 1;
+    const mode = this.mode();
     return this.store
       .interactions()
-      .map((interaction) => ({
-        interaction,
-        hits: new Set(categoryIds(interaction).filter((id) => ids.has(id))).size,
-      }))
-      .filter((r) => r.hits >= needed)
+      .map((interaction) => {
+        const cats = new Set(categoryIds(interaction));
+        const hits = [...cats].filter((id) => ids.has(id)).length;
+        const match =
+          mode === 'any' ? hits > 0 : mode === 'all' ? hits === ids.size : hits === cats.size;
+        return { interaction, hits, match: match && hits > 0 };
+      })
+      .filter((r) => r.match)
       .sort((a, b) => b.hits - a.hits);
   });
 
