@@ -50,7 +50,21 @@ import { CategoryChipComponent } from '../shared/category-chip.component';
 
     @for (c of filtered(); track c.id) {
       <div class="row">
-        <div class="grow"><app-category-chip [category]="c" /></div>
+        <div class="grow">
+          <app-category-chip [category]="c" />
+          @if (c.childIds.length) {
+            <span class="children">
+              <mat-icon class="arrow" aria-label="Sub-categories"
+                >subdirectory_arrow_right</mat-icon
+              >
+              @for (id of c.childIds; track id) {
+                @if (store.categoryById().get(id); as child) {
+                  <app-category-chip [category]="child" />
+                }
+              }
+            </span>
+          }
+        </div>
         <span class="usage">{{ usage(c.id) }} interaction(s)</span>
         <a
           matIconButton
@@ -97,6 +111,21 @@ import { CategoryChipComponent } from '../shared/category-chip.component';
     }
     .filter {
       width: min(320px, 100%);
+    }
+    .children {
+      display: inline-flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 2px;
+      margin-left: 6px;
+      font-size: 0.85em;
+      vertical-align: middle;
+    }
+    .arrow {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      color: var(--mat-sys-on-surface-variant);
     }
     .usage {
       color: var(--mat-sys-on-surface-variant);

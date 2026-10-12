@@ -1,12 +1,17 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import {
+  MatAutocompleteModule,
+  MatAutocompleteSelectedEvent,
+} from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
+import { MatChipsModule } from '@angular/material/chips';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { Category } from '../data/models';
+import { Category, descendantIds } from '../data/models';
 import { StoreService } from '../data/store.service';
 import { contrastRatio, MIN_CONTRAST, randomColorPair } from './colors';
 
@@ -38,6 +43,8 @@ const PRESETS: [string, string][] = [
   selector: 'app-category-dialog',
   imports: [
     FormsModule,
+    MatAutocompleteModule,
+    MatChipsModule,
     MatDialogModule,
     MatButtonModule,
     MatFormFieldModule,
@@ -119,6 +126,47 @@ const PRESETS: [string, string][] = [
             Contrast {{ contrast().toFixed(1) }}:1
           </span>
         </div>
+
+        <mat-form-field class="full sub-categories">
+          <mat-label>Sub-categories</mat-label>
+          <mat-chip-grid #childGrid aria-label="Sub-categories">
+            @for (c of children(); track c.id) {
+              <mat-chip-row
+                (removed)="removeChild(c.id)"
+                [style.--mat-chip-elevated-container-color]="c.bgColor"
+                [style.--mat-chip-label-text-color]="c.textColor"
+                [style.--mat-chip-with-trailing-icon-trailing-icon-color]="c.textColor"
+              >
+                {{ c.name }}
+                <button matChipRemove type="button" [attr.aria-label]="'Remove ' + c.name">
+                  <mat-icon>cancel</mat-icon>
+                </button>
+              </mat-chip-row>
+            }
+            <input
+              #childInput
+              placeholder="Add existing category…"
+              [value]="childQuery()"
+              (input)="childQuery.set(childInput.value)"
+              [matChipInputFor]="childGrid"
+              [matAutocomplete]="childAuto"
+            />
+          </mat-chip-grid>
+          <mat-autocomplete
+            #childAuto="matAutocomplete"
+            autoActiveFirstOption
+            (optionSelected)="addChild($event); childInput.value = ''"
+          >
+            @for (c of childOptions(); track c.id) {
+              <mat-option [value]="c.id">
+                <span class="cat-chip" [style.color]="c.textColor" [style.background]="c.bgColor">{{
+                  c.name
+                }}</span>
+              </mat-option>
+            }
+          </mat-autocomplete>
+          <mat-hint>Added to a puzzle together with this category.</mat-hint>
+        </mat-form-field>
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
@@ -174,6 +222,9 @@ const PRESETS: [string, string][] = [
       align-items: center;
       gap: 8px;
     }
+    .sub-categories {
+      margin-top: 16px;
+    }
     .contrast {
       margin-left: auto;
       color: var(--mat-sys-on-surface-variant);
@@ -197,6 +248,28 @@ export class CategoryDialogComponent {
   protected readonly name = signal(this.data.category?.name ?? this.data.initialName ?? '');
   protected readonly textColor = signal(this.data.category?.textColor ?? this.initialColors[0]);
   protected readonly bgColor = signal(this.data.category?.bgColor ?? this.initialColors[1]);
+  private readonly childIds = signal<string[]>(this.data.category?.childIds ?? []);
+  protected readonly childQuery = signal('');
+  protected readonly children = computed(() => {
+    const byId = this.store.categoryById();
+    return this.childIds().flatMap((id) => byId.get(id) ?? []);
+  });
+  /** Candidates: not itself, not already chosen, and not an ancestor (would form a cycle). */
+  protected readonly childOptions = computed(() => {
+    const selfId = this.data.category?.id;
+    const byId = this.store.categoryById();
+    const chosen = new Set(this.childIds());
+    const q = this.childQuery().trim().toLocaleLowerCase();
+    return this.store
+      .categories()
+      .filter(
+        (c) =>
+          c.id !== selfId &&
+          !chosen.has(c.id) &&
+          c.name.toLocaleLowerCase().includes(q) &&
+          !(selfId && descendantIds(c.id, byId).includes(selfId)),
+      );
+  });
   protected readonly contrast = computed(() => contrastRatio(this.textColor(), this.bgColor()));
 
   protected readonly error = computed(() => {
@@ -214,12 +287,22 @@ export class CategoryDialogComponent {
     this.bgColor.set(bg);
   }
 
+  protected addChild(e: MatAutocompleteSelectedEvent): void {
+    this.childIds.update((ids) => [...ids, e.option.value as string]);
+    this.childQuery.set('');
+  }
+
+  protected removeChild(id: string): void {
+    this.childIds.update((ids) => ids.filter((x) => x !== id));
+  }
+
   protected submit(): void {
     if (this.error()) return;
     this.ref.close({
       name: this.name().trim(),
       textColor: this.textColor(),
       bgColor: this.bgColor(),
+      childIds: this.childIds(),
     });
   }
 }

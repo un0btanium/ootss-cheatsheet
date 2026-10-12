@@ -36,6 +36,19 @@ describe('StoreService', () => {
     expect(store.interactions()[0].segments).toEqual([{ t: 'text', text: 'use Key' }]);
   });
 
+  it('removes a deleted category from its parents', () => {
+    const store = create();
+    const child = store.addCategory({ name: 'Red Key', textColor: '#000000', bgColor: '#ffffff' });
+    const parent = store.addCategory({
+      name: 'Key',
+      textColor: '#000000',
+      bgColor: '#ffffff',
+      childIds: [child.id],
+    });
+    store.deleteCategory(child.id);
+    expect(store.categoryById().get(parent.id)?.childIds).toEqual([]);
+  });
+
   it('persists to localStorage and loads it again', () => {
     const store = create();
     store.addCategory({ name: 'Lever', textColor: '#000000', bgColor: '#ffffff' });

@@ -3,6 +3,8 @@ export interface Category {
   name: string;
   textColor: string;
   bgColor: string;
+  /** Sub-categories; a category may be a child of several parents. */
+  childIds: string[];
 }
 
 export type Segment = { t: 'text'; text: string } | { t: 'cat'; id: string };
@@ -26,6 +28,25 @@ export interface AppData {
 
 export function newId(): string {
   return crypto.randomUUID();
+}
+
+/**
+ * All sub-categories of `id`, recursively (breadth-first, excluding `id`).
+ * Cycle-safe, so malformed data can't loop forever.
+ */
+export function descendantIds(id: string, categoryById: ReadonlyMap<string, Category>): string[] {
+  const seen = new Set([id]);
+  const out: string[] = [];
+  const queue = [id];
+  while (queue.length) {
+    for (const child of categoryById.get(queue.shift()!)?.childIds ?? []) {
+      if (seen.has(child) || !categoryById.has(child)) continue;
+      seen.add(child);
+      out.push(child);
+      queue.push(child);
+    }
+  }
+  return out;
 }
 
 /** Merges adjacent text segments and drops empty ones. */

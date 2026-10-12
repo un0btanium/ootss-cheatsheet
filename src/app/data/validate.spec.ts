@@ -26,6 +26,21 @@ describe('parseAppData', () => {
     ]);
   });
 
+  it('defaults missing sub-categories and drops invalid references', () => {
+    expect(parseAppData(valid).categories[0].childIds).toEqual([]);
+    const data = parseAppData({
+      ...valid,
+      categories: [
+        { ...valid.categories[0], childIds: ['b', 'a', 'gone', 'b'] },
+        { id: 'b', name: 'Door', textColor: '#000000', bgColor: '#ffffff' },
+      ],
+    });
+    expect(data.categories[0].childIds).toEqual(['b']);
+    expect(() =>
+      parseAppData({ ...valid, categories: [{ ...valid.categories[0], childIds: [1] }] }),
+    ).toThrow();
+  });
+
   it('rejects foreign or malformed data', () => {
     expect(() => parseAppData(null)).toThrow();
     expect(() => parseAppData({ ...valid, app: 'other' })).toThrow();

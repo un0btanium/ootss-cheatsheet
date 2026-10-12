@@ -44,13 +44,22 @@ export function parseAppData(raw: unknown): AppData {
       throw new Error('Invalid category entry.');
     }
     if (ids.has(c['id'])) throw new Error(`Duplicate category id "${c['id']}".`);
+    const childIds = c['childIds'] ?? [];
+    if (!Array.isArray(childIds) || childIds.some((id) => typeof id !== 'string')) {
+      throw new Error('Invalid sub-categories of a category.');
+    }
     ids.add(c['id']);
     categories.push({
       id: c['id'],
       name: c['name'],
       textColor: c['textColor'],
       bgColor: c['bgColor'],
+      childIds: childIds as string[],
     });
+  }
+  // Drop unknown, self and duplicate sub-category references.
+  for (const c of categories) {
+    c.childIds = [...new Set(c.childIds)].filter((id) => id !== c.id && ids.has(id));
   }
 
   const interactions: Interaction[] = [];

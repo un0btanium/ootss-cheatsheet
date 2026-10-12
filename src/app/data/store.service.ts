@@ -65,8 +65,13 @@ export class StoreService {
     return this._categories().find((c) => c.name.trim().toLocaleLowerCase() === key);
   }
 
-  addCategory(data: Omit<Category, 'id'>): Category {
-    const category: Category = { ...data, name: data.name.trim(), id: newId() };
+  addCategory(data: Omit<Category, 'id' | 'childIds'> & { childIds?: string[] }): Category {
+    const category: Category = {
+      childIds: [],
+      ...data,
+      name: data.name.trim(),
+      id: newId(),
+    };
     this._categories.update((list) => [...list, category]);
     return category;
   }
@@ -94,7 +99,13 @@ export class StoreService {
           : i,
       ),
     );
-    this._categories.update((list) => list.filter((c) => c.id !== id));
+    this._categories.update((list) =>
+      list
+        .filter((c) => c.id !== id)
+        .map((c) =>
+          c.childIds.includes(id) ? { ...c, childIds: c.childIds.filter((x) => x !== id) } : c,
+        ),
+    );
   }
 
   // --- Interactions ---

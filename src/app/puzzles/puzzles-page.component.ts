@@ -22,7 +22,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ActivatedRoute, Router } from '@angular/router';
 import { map } from 'rxjs';
-import { Category } from '../data/models';
+import { Category, descendantIds } from '../data/models';
 import { categoryIds, StoreService } from '../data/store.service';
 import { CategoryChipComponent } from '../shared/category-chip.component';
 import { InteractionViewComponent } from '../shared/interaction-view.component';
@@ -218,7 +218,10 @@ export class PuzzlesPageComponent {
   });
 
   protected add(e: MatAutocompleteSelectedEvent): void {
-    this.setSelection([...this.selectedIds(), e.option.value as string]);
+    // A category brings all its sub-categories (recursively) along.
+    const id = e.option.value as string;
+    const added = [id, ...descendantIds(id, this.store.categoryById())];
+    this.setSelection([...new Set([...this.selectedIds(), ...added])]);
     this.query.set('');
   }
 

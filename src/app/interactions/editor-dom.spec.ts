@@ -6,6 +6,7 @@ const cat = (id: string, name: string): Category => ({
   name,
   textColor: '#ffffff',
   bgColor: '#000000',
+  childIds: [],
 });
 
 describe('findMatches', () => {
