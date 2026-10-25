@@ -25,5 +25,10 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./all-in-one/all-in-one-page.component').then((m) => m.AllInOnePageComponent),
   },
+  {
+    path: 'zen',
+    title: 'Zen · OotSS',
+    loadComponent: () => import('./zen/zen-page.component').then((m) => m.ZenPageComponent),
+  },
   { path: '**', redirectTo: 'categories' },
 ];

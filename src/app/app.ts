@@ -109,6 +109,7 @@ export class App {
     { path: '/interactions', label: 'Interactions', icon: 'notes' },
     { path: '/puzzles', label: 'Puzzles', icon: 'extension' },
     { path: '/all', label: 'All-in-One', icon: 'view_column' },
+    { path: '/zen', label: 'Zen', icon: 'self_improvement' },
   ];
 
   constructor() {
